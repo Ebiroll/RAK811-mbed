@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 #include <stdio.h>
-#include <ee_printf.h>
+#include <mbed_printf.h>
 
 #if MBED_CONF_APP_LORAWAN_ENABLED
 
@@ -105,11 +105,11 @@ int main (void)
 
     // Initialize LoRaWAN stack
     if (lorawan.initialize(&ev_queue) != LORAWAN_STATUS_OK) {
-        ee_printf("\r\n LoRa initialization failed! \r\n");
+        mbed_printf("\r\n LoRa initialization failed! \r\n");
         return -1;
     }
 
-    ee_printf("\r\n Mbed LoRaWANStack initialized \r\n");
+    mbed_printf("\r\n Mbed LoRaWANStack initialized \r\n");
 
     // prepare application callbacks
     callbacks.events = mbed::callback(lora_event_handler);
@@ -118,31 +118,31 @@ int main (void)
     // Set number of retries in case of CONFIRMED messages
     if (lorawan.set_confirmed_msg_retries(CONFIRMED_MSG_RETRY_COUNTER)
                                           != LORAWAN_STATUS_OK) {
-        ee_printf("\r\n set_confirmed_msg_retries failed! \r\n\r\n");
+        mbed_printf("\r\n set_confirmed_msg_retries failed! \r\n\r\n");
         return -1;
     }
 
-    ee_printf("\r\n CONFIRMED message retries : %d \r\n",
+    mbed_printf("\r\n CONFIRMED message retries : %d \r\n",
            CONFIRMED_MSG_RETRY_COUNTER);
 
     // Enable adaptive data rate
     if (lorawan.enable_adaptive_datarate() != LORAWAN_STATUS_OK) {
-        ee_printf("\r\n enable_adaptive_datarate failed! \r\n");
+        mbed_printf("\r\n enable_adaptive_datarate failed! \r\n");
         return -1;
     }
 
-    ee_printf("\r\n Adaptive data  rate (ADR) - Enabled \r\n");
+    mbed_printf("\r\n Adaptive data  rate (ADR) - Enabled \r\n");
 
     retcode = lorawan.connect();
 
     if (retcode == LORAWAN_STATUS_OK ||
         retcode == LORAWAN_STATUS_CONNECT_IN_PROGRESS) {
     } else {
-        ee_printf("\r\n Connection error, code = %d \r\n", retcode);
+        mbed_printf("\r\n Connection error, code = %d \r\n", retcode);
         return -1;
     }
 
-    ee_printf("\r\n Connection - In Progress ...\r\n");
+    mbed_printf("\r\n Connection - In Progress ...\r\n");
 
     // make your event queue dispatching events forever
     ev_queue.dispatch_forever();
@@ -163,10 +163,10 @@ static void send_message()
     if (ds1820.begin()) {
         ds1820.startConversion();
         sensor_value = ds1820.read();
-        ee_printf("\r\n Dummy Sensor Value = %3.1f \r\n", sensor_value);
+        mbed_printf("\r\n Dummy Sensor Value = %3.1f \r\n", sensor_value);
         ds1820.startConversion();
     } else {
-        ee_printf("\r\n No sensor found \r\n");
+        mbed_printf("\r\n No sensor found \r\n");
         return;
     }
 
@@ -177,12 +177,12 @@ static void send_message()
                            MSG_CONFIRMED_FLAG);
 
     if (retcode < 0) {
-        retcode == LORAWAN_STATUS_WOULD_BLOCK ? ee_printf("send - WOULD BLOCK\r\n")
-                : ee_printf("\r\n send() - Error code %d \r\n", retcode);
+        retcode == LORAWAN_STATUS_WOULD_BLOCK ? mbed_printf("send - WOULD BLOCK\r\n")
+                : mbed_printf("\r\n send() - Error code %d \r\n", retcode);
         return;
     }
 
-    ee_printf("\r\n %d bytes scheduled for transmission \r\n", retcode);
+    mbed_printf("\r\n %d bytes scheduled for transmission \r\n", retcode);
     memset(tx_buffer, 0, sizeof(tx_buffer));
 }
 
@@ -197,17 +197,17 @@ static void receive_message()
                               MSG_CONFIRMED_FLAG|MSG_UNCONFIRMED_FLAG);
 
     if (retcode < 0) {
-        ee_printf("\r\n receive() - Error code %d \r\n", retcode);
+        mbed_printf("\r\n receive() - Error code %d \r\n", retcode);
         return;
     }
 
-    ee_printf(" Data:");
+    mbed_printf(" Data:");
 
     for (uint8_t i = 0; i < retcode; i++) {
-        ee_printf("%x", rx_buffer[i]);
+        mbed_printf("%x", rx_buffer[i]);
     }
 
-    ee_printf("\r\n Data Length: %d\r\n", retcode);
+    mbed_printf("\r\n Data Length: %d\r\n", retcode);
 
     memset(rx_buffer, 0, sizeof(rx_buffer));
 }
@@ -219,7 +219,7 @@ static void lora_event_handler(lorawan_event_t event)
 {
     switch (event) {
         case CONNECTED:
-            ee_printf("\r\n Connection - Successful \r\n");
+            mbed_printf("\r\n Connection - Successful \r\n");
             if (MBED_CONF_LORA_DUTY_CYCLE_ON) {
                 send_message();
             } else {
@@ -229,10 +229,10 @@ static void lora_event_handler(lorawan_event_t event)
             break;
         case DISCONNECTED:
             ev_queue.break_dispatch();
-            ee_printf("\r\n Disconnected Successfully \r\n");
+            mbed_printf("\r\n Disconnected Successfully \r\n");
             break;
         case TX_DONE:
-            ee_printf("\r\n Message Sent to Network Server \r\n");
+            mbed_printf("\r\n Message Sent to Network Server \r\n");
             if (MBED_CONF_LORA_DUTY_CYCLE_ON) {
                 send_message();
             }
@@ -241,22 +241,22 @@ static void lora_event_handler(lorawan_event_t event)
         case TX_ERROR:
         case TX_CRYPTO_ERROR:
         case TX_SCHEDULING_ERROR:
-            ee_printf("\r\n Transmission Error - EventCode = %d \r\n", event);
+            mbed_printf("\r\n Transmission Error - EventCode = %d \r\n", event);
             // try again
             if (MBED_CONF_LORA_DUTY_CYCLE_ON) {
                 send_message();
             }
             break;
         case RX_DONE:
-            ee_printf("\r\n Received message from Network Server \r\n");
+            mbed_printf("\r\n Received message from Network Server \r\n");
             receive_message();
             break;
         case RX_TIMEOUT:
         case RX_ERROR:
-            ee_printf("\r\n Error in reception - Code = %d \r\n", event);
+            mbed_printf("\r\n Error in reception - Code = %d \r\n", event);
             break;
         case JOIN_FAILURE:
-            ee_printf("\r\n OTAA Failed - Check Keys \r\n");
+            mbed_printf("\r\n OTAA Failed - Check Keys \r\n");
             break;
         default:
             MBED_ASSERT("Unknown Event");
