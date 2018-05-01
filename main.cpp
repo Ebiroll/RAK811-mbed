@@ -107,14 +107,32 @@ int main (void)
 
     BoardInit();
 
-    mbed_printf("LIS3DH dev id is %d \n", acc.read_id());   
+    mbed_printf(" LIS3DH dev id is %d \n", acc.read_id());   
     if (acc.read_id() == I_AM_LIS3DH){
-            mbed_printf("LIS3DH dev id is %d \n", acc.read_id());   
+            mbed_printf(" LIS3DH found\n");   
     } else 
     {
-        mbed_printf("LIS3DH not found!\n");           
+        mbed_printf(" LIS3DH not found!\n");           
     }
 
+    // CHECK we got the pins right from mbed
+    if (PA_7 != MBED_CONF_APP_LORA_SPI_MOSI)
+       printf("MOSI %d\n",MBED_CONF_APP_LORA_SPI_MOSI);
+
+    if (PA_6 != MBED_CONF_APP_LORA_SPI_MISO)
+       printf("MISO %d\n",MBED_CONF_APP_LORA_SPI_MISO);
+
+    if (PA_5 != MBED_CONF_APP_LORA_SPI_SCLK)
+       printf("SCLK %d\n",MBED_CONF_APP_LORA_SPI_SCLK);
+
+    if (PB_0 != MBED_CONF_APP_LORA_CS)
+       printf("CS %d\n",MBED_CONF_APP_LORA_CS);
+
+    if (PH_1 != MBED_CONF_APP_LORA_TCXO)
+       printf("TXCO %d\n",MBED_CONF_APP_LORA_TCXO);
+
+
+    // End check
 
 
     // stores the status of a call to LoRaWAN protocol
