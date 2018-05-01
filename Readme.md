@@ -11,28 +11,27 @@ which arm-none-eabi-gcc
 
     cd mbed-cli
 
-    python setup.py install
+    python2 setup.py install
 
     which arm-none-eabi-gcc
 
     mbed config -G ARM_PATH "/usr/local/bin"
 
-## Pull the example code
-
-   git clone https://github.com/ARMmbed/mbed-os-example-lorawan.git
-
-   cd mbed-os-example-lorawan/
+## Deploy, downloads the version described in the .lib files.
 
    mbed deploy
 
-   mbed new .
 
 ## Configure for your node
 edit mbedapp.json to configure lora.device-eui, lora.application-eui, lora.application-key
 
-##. compile and send to evaluation board (assumes there is only one ST-Link/Nucleo/DISCO board connected)
+##. compile
 
-mbed compile -m MTB_RAK811 -t GCC_ARM --flash
+   mbed compile
+
+   Or
+
+   mbed compile -m MTB_RAK811 -t GCC_ARM --flash
 
 
 ## To compile with debug info
@@ -48,17 +47,17 @@ mbed-os/targets/TARGET_STM/TARGET_STM32L1/TARGET_MTB_RAK811/device/TOOLCHAIN_GCC
 
 # Flashing
 
-I use this, https://github.com/Ebiroll/esp32_blackmagic
+I use backmagic, https://github.com/Ebiroll/esp32_blackmagic
 
+    arm-none-eabi-gdb ./BUILD/MTB_RAK811/GCC_ARM/RAK811-mbed.elf -ex 'target  extended-remote 192.168.1.117:2345'
 
-arm-none-eabi-gdb ./BUILD/MTB_RAK811/GCC_ARM/RAK811-mbed.elf -ex 'target  extended-remote 192.168.1.117:2345'
+    (gdb) monitor swdp_scan
 
-(gdb) monitor swdp_scan
-
-(gdb) monitor help
-(gdb) attach 1
-(gdb) load
-() b main
+    (gdb) monitor help
+    (gdb) attach 1
+    (gdb) load
+    (gdb) b main
+    (gdb) b InitMcu()
 
 ## lORA WAN 1.0.2
 
