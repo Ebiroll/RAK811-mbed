@@ -35,7 +35,9 @@ edit mbedapp.json to configure lora.device-eui, lora.application-eui, lora.appli
 mbed compile -m MTB_RAK811 -t GCC_ARM --flash
 
 
-## To compile with debug info 
+## To compile with debug info
+mbed compile --profile mbed-os/tools/profiles/debug.json
+
 mbed compile --profile mbed-os/tools/profiles/debug.json  -m MTB_RAK811 -t GCC_ARM
 However it might not fit fo flash,
 To run in qemu,try increasing this
@@ -44,6 +46,19 @@ To run in qemu,try increasing this
 mbed-os/targets/TARGET_STM/TARGET_STM32L1/TARGET_MTB_RAK811/device/TOOLCHAIN_GCC_ARM/STM32L151XB-A.ld
 
 
+# Flashing
+
+I use this, https://github.com/Ebiroll/esp32_blackmagic
+
+
+arm-none-eabi-gdb ./BUILD/MTB_RAK811/GCC_ARM/RAK811-mbed.elf -ex 'target  extended-remote 192.168.1.117:2345'
+
+(gdb) monitor swdp_scan
+
+(gdb) monitor help
+(gdb) attach 1
+(gdb) load
+() b main
 
 ## lORA WAN 1.0.2
 
