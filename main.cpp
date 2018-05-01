@@ -109,7 +109,7 @@ int main (void)
         return -1;
     }
 
-    mbed_printf("\r\n Mbed LoRaWANStack initialized \r\n");
+    mbed_printf("\r\n New Mbed LoRaWANStack initialized \r\n");
 
     // prepare application callbacks
     callbacks.events = mbed::callback(lora_event_handler);
