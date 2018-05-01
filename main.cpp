@@ -29,14 +29,15 @@
 #include "DummySensor.h"
 #include "trace_helper.h"
 #include "lora_radio_helper.h"
+#include "board.h"
 
 using namespace events;
 
 // Max payload size can be LORAMAC_PHY_MAXPAYLOAD.
 // This example only communicates with much shorter messages (<30 bytes).
 // If longer messages are used, these buffers must be changed accordingly.
-uint8_t tx_buffer[30];
-uint8_t rx_buffer[30];
+uint8_t tx_buffer[40];
+uint8_t rx_buffer[40];
 
 /*
  * Sets up an application dependent transmission timer in ms. Used only when Duty Cycling is off for testing
@@ -64,6 +65,10 @@ uint8_t rx_buffer[30];
  * Dummy sensor class object
  */
 DS1820  ds1820(PC_9);
+
+
+
+
 
 /**
 * This event queue is the global event queue for both the
@@ -99,6 +104,18 @@ int main (void)
 {
     // setup tracing
     setup_trace();
+
+    BoardInit();
+
+    mbed_printf("LIS3DH dev id is %d \n", acc.read_id());   
+    if (acc.read_id() == I_AM_LIS3DH){
+            mbed_printf("LIS3DH dev id is %d \n", acc.read_id());   
+    } else 
+    {
+        mbed_printf("LIS3DH not found!\n");           
+    }
+
+
 
     // stores the status of a call to LoRaWAN protocol
     lorawan_status_t retcode;

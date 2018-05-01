@@ -70,7 +70,9 @@ https://github.com/ARMmbed/mbed-os-example-lorawan
 
 https://github.com/ARMmbed/mbed-os/pull/6043/files
 
+## Lis3dh info
 
+https://os.mbed.com/users/knaresh89/code/itracker-mbed-os-example-lis3dh/file/cd96b05ace6e/LIS3DH/
 
 # Example LoRaWAN application for Mbed-OS
 
