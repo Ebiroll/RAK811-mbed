@@ -59,6 +59,11 @@ I use backmagic, https://github.com/Ebiroll/esp32_blackmagic
     (gdb) b main
     (gdb) b InitMcu()
 
+## STM32L1xxx hardware
+
+http://www.st.com/content/ccc/resource/technical/document/application_note/bf/94/f5/49/96/52/4e/75/CD00273528.pdf/files/CD00273528.pdf/jcr:content/translations/en.CD00273528.pdf
+
+
 ## lORA WAN 1.0.2
 
 https://os.mbed.com/teams/mbed-os-examples/code/mbed-os-example-lorawan/
