@@ -14,6 +14,7 @@ Maintainer: Miguel Luis and Gregory Cristian
 */
 #include "mbed.h"
 #include "board.h"
+#include "Adafruit_SSD1306.h"
 
 /*!
  * Unique Devices IDs register set ( STM32 )
@@ -45,6 +46,8 @@ AnalogIn Battery(BAT_LEVEL_PIN);
 //DigitalIn PC0( PC_0, PullUp ); 
 
 //AnalogIn *Battery;
+//I2C NI2c(PB_3, PB_5);
+
 
 #define AIN_VREF            3300    // STM32 internal refernce
 #define AIN_VBAT_DIV        2       // Resistor divider
@@ -80,6 +83,16 @@ void BoardInit( void )
     GreenLed = 1;   // Active Low
 
     TimerTimeCounterInit( );
+
+
+    Adafruit_SSD1306_I2c display(I2c,PB_12,SSD_I2C_ADDRESS,64,128);
+
+    display.splash();
+    wait(2.0);
+    //display.clearDisplay();
+
+
+
 
     Gps.init( );
     Gps.enable( 1 );
@@ -145,3 +158,66 @@ BoardVersion_t BoardGetVersion( void )
     }
 */
 }
+
+#if 0
+// Original RAK McuInit()
+
+void BoardInitMcu( void )
+{
+    if( McuInitialized == false )
+    {
+#if defined( USE_BOOTLOADER )
+        // Set the Vector Table base location at 0x3000
+        SCB->VTOR = FLASH_BASE | 0x3000;
+#endif
+        HAL_Init( );
+
+        SystemClockConfig( );
+			
+				UartMcuInit(&Uart1, UART_1, UART_TX, UART_RX);
+				UartMcuConfig(&Uart1, RX_TX, 115200, 
+																		 UART_8_BIT,
+																		 UART_1_STOP_BIT,
+																		 NO_PARITY,
+																		 NO_FLOW_CTRL);
+        RtcInit( );
+
+        BoardUnusedIoInit( );	
+    }
+    else
+    {
+        SystemClockReConfig( );
+    }
+
+    AdcInit( &Adc, BAT_LEVEL_PIN );
+
+    SpiInit( &SX1276.Spi, RADIO_MOSI, RADIO_MISO, RADIO_SCLK, NC );
+    SX1276IoInit( );
+    GpioInit( &SX1276.Xtal, RADIO_XTAL_EN, PIN_OUTPUT, PIN_PUSH_PULL, PIN_NO_PULL, 1 );
+		
+    if( McuInitialized == false )
+    {
+        McuInitialized = true;
+        if( GetBoardPowerSource( ) == BATTERY_POWER )
+        {
+            CalibrateSystemWakeupTime( );
+        }
+    }
+}
+
+void BoardDeInitMcu( void )
+{
+    //Gpio_t ioPin;
+
+    AdcDeInit( &Adc );
+
+    SpiDeInit( &SX1276.Spi );
+    SX1276IoDeInit( );
+
+    //GpioInit( &ioPin, OSC_LSE_IN, PIN_INPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+    //GpioInit( &ioPin, OSC_LSE_OUT, PIN_INPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+	
+	  GpioWrite( &SX1276.Xtal, 0 );
+}
+
+#endif

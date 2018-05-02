@@ -16,7 +16,8 @@
  */
 #include <stdio.h>
 #include <mbed_printf.h>
-
+#include "mbed.h"
+ 
 #if MBED_CONF_APP_LORAWAN_ENABLED
 
 #ifdef DEVICE_SPI
@@ -97,6 +98,7 @@ static LoRaWANInterface lorawan(radio);
  */
 static lorawan_app_callbacks_t callbacks;
 
+
 /**
  * Entry point for application
  */
@@ -106,6 +108,7 @@ int main (void)
     setup_trace();
 
     BoardInit();
+
 
     mbed_printf(" LIS3DH dev id is %d \n", acc.read_id());   
     if (acc.read_id() == I_AM_LIS3DH){
@@ -193,20 +196,16 @@ static void send_message()
 {
     uint16_t packet_len;
     int16_t retcode;
-    float sensor_value;
 
-    if (ds1820.begin()) {
-        ds1820.startConversion();
-        sensor_value = ds1820.read();
-        mbed_printf("\r\n Dummy Sensor Value = %3.1f \r\n", sensor_value);
-        ds1820.startConversion();
-    } else {
-        mbed_printf("\r\n No sensor found \r\n");
-        return;
-    }
+    // Read gps value
 
-    packet_len = sprintf((char*) tx_buffer, "Dummy Sensor Value is %3.1f",
-                    sensor_value);
+
+    tx_buffer[0]=0;
+    tx_buffer[1]=1;
+    tx_buffer[2]=2;
+    tx_buffer[3]=3;
+
+    packet_len=4;
 
     retcode = lorawan.send(MBED_CONF_LORA_APP_PORT, tx_buffer, packet_len,
                            MSG_CONFIRMED_FLAG);

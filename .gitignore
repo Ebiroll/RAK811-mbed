@@ -1,0 +1,7 @@
+.pioenvs
+.piolibdeps
+.vscode/c_cpp_properties.json
+.vscode/launch.json
+minimal-printf/
+mbed-os
+mbed-lora-radio-drv
