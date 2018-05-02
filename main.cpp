@@ -43,7 +43,7 @@ uint8_t rx_buffer[40];
 /*
  * Sets up an application dependent transmission timer in ms. Used only when Duty Cycling is off for testing
  */
-#define TX_TIMER                        10000
+#define TX_TIMER                        20000
 
 /**
  * Maximum number of events for the event queue.
@@ -108,6 +108,11 @@ int main (void)
     setup_trace();
 
     BoardInit();
+
+    display.setTextCursor(0,0);                  // On va écrire en x=0, y=0
+    display.printf("Starting !");   
+    display.display();   
+
 
 
     mbed_printf(" LIS3DH dev id is %d \n", acc.read_id());   
@@ -197,6 +202,11 @@ static void send_message()
     uint16_t packet_len;
     int16_t retcode;
 
+    display.setTextCursor(0,0);                  // On va écrire en x=0, y=0
+    display.printf("           ");
+    display.display();   
+
+
     // Read gps value
 
 
@@ -267,6 +277,10 @@ static void lora_event_handler(lorawan_event_t event)
             break;
         case TX_DONE:
             mbed_printf("\r\n Message Sent to Network Server \r\n");
+            display.setTextCursor(0,0);                  // On va écrire en x=0, y=0
+            display.printf("Message Sent !");   
+            display.display();   
+
             if (MBED_CONF_LORA_DUTY_CYCLE_ON) {
                 send_message();
             }

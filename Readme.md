@@ -27,9 +27,9 @@ edit mbedapp.json to configure lora.device-eui, lora.application-eui, lora.appli
 
 ## compile
 
-   mbed compile
+   mbed compile --profile profiles/develop.json
 
-   Or
+   or
 
    mbed compile -m MTB_RAK811 -t GCC_ARM --flash
 

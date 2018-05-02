@@ -21,6 +21,8 @@ Maintainer: Miguel Luis and Gregory Cristian
 #include "system/utilities.h"
 #include "gps.h"
 #include "LIS3DH.h"
+#include "Adafruit_SSD1306.h"
+
 
 /*!
  * Board IO pins definitions
@@ -87,6 +89,7 @@ extern DigitalOut RedLed;
 extern DigitalOut GreenLed;
 extern GPS Gps;
 extern LIS3DH acc;
+extern Adafruit_SSD1306_I2c display;
 
 //extern MPL3115A2 Mpl3115a2;
 //extern MMA8451Q Mma8451q;
@@ -171,5 +174,9 @@ BoardVersion_t BoardGetVersion( void );
  * \param [IN] id Pointer to an array that will contain the Unique ID
  */
 void BoardGetDevEUI( uint8_t *id );
+
+
+void BoardInitMcu( void );
+
 
 #endif // __BOARD_H__

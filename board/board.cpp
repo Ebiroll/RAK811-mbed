@@ -14,7 +14,6 @@ Maintainer: Miguel Luis and Gregory Cristian
 */
 #include "mbed.h"
 #include "board.h"
-#include "Adafruit_SSD1306.h"
 
 /*!
  * Unique Devices IDs register set ( STM32 )
@@ -39,6 +38,9 @@ LIS3DH acc(I2c, LIS3DH_V_CHIP_ADDR);  //  LIS3DH_DR_NR_LP_50HZ, LIS3DH_FS_8G
 
 AnalogIn Battery(BAT_LEVEL_PIN);
 
+Adafruit_SSD1306_I2c display(I2c,PB_12,SSD_I2C_ADDRESS,64,128);
+
+
 //DigitalOut Pc7( PC_7 );
 //DigitalIn Pc1( PC_1 );
 
@@ -53,6 +55,12 @@ AnalogIn Battery(BAT_LEVEL_PIN);
 #define AIN_VBAT_DIV        2       // Resistor divider
 
 //SX1272MB2xAS Radio( NULL );
+
+/*!
+ * Flag to indicate if the MCU is Initialized
+ */
+static bool McuInitialized = false;
+
 
 /*!
  * Nested interrupt counter.
@@ -78,6 +86,10 @@ void BoardEnableIrq( void )
 
 void BoardInit( void )
 {
+
+    // Old version
+    //BoardInitMcu();
+
     // Initalize LEDs
     RedLed = 1;     // Active Low
     GreenLed = 1;   // Active Low
@@ -85,13 +97,9 @@ void BoardInit( void )
     TimerTimeCounterInit( );
 
 
-    Adafruit_SSD1306_I2c display(I2c,PB_12,SSD_I2C_ADDRESS,64,128);
-
     display.splash();
     wait(2.0);
-    //display.clearDisplay();
-
-
+    display.clearDisplay();
 
 
     Gps.init( );
@@ -160,6 +168,128 @@ BoardVersion_t BoardGetVersion( void )
 }
 
 #if 0
+
+
+/*!
+ * Timer used at first boot to calibrate the SystemWakeupTime
+ */
+static TimerEvent_t CalibrateSystemWakeupTimeTimer;
+
+
+/*!
+ * Flag to indicate if the SystemWakeupTime is Calibrated
+ */
+static bool SystemWakeupTimeCalibrated = false;
+
+/*!
+ * Callback indicating the end of the system wake-up time calibration
+ */
+static void OnCalibrateSystemWakeupTimeTimerEvent( void )
+{
+    SystemWakeupTimeCalibrated = true;
+}
+
+
+static void BoardUnusedIoInit( void )
+{
+
+#if defined( USE_DEBUGGER )
+    HAL_DBGMCU_EnableDBGStopMode( );
+    HAL_DBGMCU_EnableDBGSleepMode( );
+    HAL_DBGMCU_EnableDBGStandbyMode( );
+#else
+    HAL_DBGMCU_DisableDBGSleepMode( );
+    HAL_DBGMCU_DisableDBGStopMode( );
+    HAL_DBGMCU_DisableDBGStandbyMode( );
+
+#endif
+}
+
+void SystemClockConfig( void )
+{
+    RCC_OscInitTypeDef RCC_OscInitStruct;
+    RCC_ClkInitTypeDef RCC_ClkInitStruct;
+    RCC_PeriphCLKInitTypeDef PeriphClkInit;
+
+    __HAL_RCC_PWR_CLK_ENABLE( );
+
+    __HAL_PWR_VOLTAGESCALING_CONFIG( PWR_REGULATOR_VOLTAGE_SCALE2 );
+
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSE;
+    RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+    RCC_OscInitStruct.LSEState = RCC_LSE_ON;
+	  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_OFF;
+//    RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
+//    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+//    RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL8;
+//    RCC_OscInitStruct.PLL.PLLDIV = RCC_PLL_DIV3;
+    HAL_RCC_OscConfig( &RCC_OscInitStruct );
+
+    RCC_ClkInitStruct.ClockType = ( RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2 );
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    HAL_RCC_ClockConfig( &RCC_ClkInitStruct, FLASH_LATENCY_1 );
+
+    PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC;
+    PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
+    HAL_RCCEx_PeriphCLKConfig( &PeriphClkInit );
+
+    HAL_SYSTICK_Config( HAL_RCC_GetHCLKFreq( ) / 1000 );
+
+    HAL_SYSTICK_CLKSourceConfig( SYSTICK_CLKSOURCE_HCLK );
+
+    /* HAL_NVIC_GetPriorityGrouping*/
+    HAL_NVIC_SetPriorityGrouping( NVIC_PRIORITYGROUP_4 );
+
+    /* SysTick_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority( SysTick_IRQn, 0, 0 );
+}
+
+void CalibrateSystemWakeupTime( void )
+{
+    int breakout=0;
+    if( SystemWakeupTimeCalibrated == false )
+    {
+        TimerInit( &CalibrateSystemWakeupTimeTimer, OnCalibrateSystemWakeupTimeTimerEvent );
+        TimerSetValue( &CalibrateSystemWakeupTimeTimer, 1000 );
+        TimerStart( &CalibrateSystemWakeupTimeTimer );
+        while( (SystemWakeupTimeCalibrated == false) && breakout++<100000 )
+        {
+            //TimerLowPowerHandler( );
+        }
+    }
+}
+
+void SystemClockReConfig( void )
+{
+    __HAL_RCC_PWR_CLK_ENABLE( );
+    __HAL_PWR_VOLTAGESCALING_CONFIG( PWR_REGULATOR_VOLTAGE_SCALE2 );
+
+    /* Enable HSI */
+    __HAL_RCC_HSI_ENABLE();
+    /* Wait till HSE is ready */
+    while( __HAL_RCC_GET_FLAG( RCC_FLAG_HSIRDY ) == RESET )
+    {
+    }
+
+    /* Select HSI as system clock source */
+    __HAL_RCC_SYSCLK_CONFIG ( RCC_SYSCLKSOURCE_HSI );
+
+    /* Wait till HSI is used as system clock source */
+    while( __HAL_RCC_GET_SYSCLK_SOURCE( ) != RCC_SYSCLKSOURCE_STATUS_HSI )
+    {
+    }
+}
+
+void SysTick_Handler( void )
+{
+    HAL_IncTick( );
+    HAL_SYSTICK_IRQHandler( );
+}
+
 // Original RAK McuInit()
 
 void BoardInitMcu( void )
@@ -174,13 +304,13 @@ void BoardInitMcu( void )
 
         SystemClockConfig( );
 			
-				UartMcuInit(&Uart1, UART_1, UART_TX, UART_RX);
-				UartMcuConfig(&Uart1, RX_TX, 115200, 
-																		 UART_8_BIT,
-																		 UART_1_STOP_BIT,
-																		 NO_PARITY,
-																		 NO_FLOW_CTRL);
-        RtcInit( );
+		//UartMcuInit(&Uart1, UART_1, UART_TX, UART_RX);
+		//UartMcuConfig(&Uart1, RX_TX, 115200, 
+		//																 UART_8_BIT,
+		//																 UART_1_STOP_BIT,
+		//																 NO_PARITY,
+		//																 NO_FLOW_CTRL);
+        //RtcInit( );
 
         BoardUnusedIoInit( );	
     }
@@ -189,16 +319,16 @@ void BoardInitMcu( void )
         SystemClockReConfig( );
     }
 
-    AdcInit( &Adc, BAT_LEVEL_PIN );
+    //AdcInit( &Adc, BAT_LEVEL_PIN );
 
-    SpiInit( &SX1276.Spi, RADIO_MOSI, RADIO_MISO, RADIO_SCLK, NC );
-    SX1276IoInit( );
-    GpioInit( &SX1276.Xtal, RADIO_XTAL_EN, PIN_OUTPUT, PIN_PUSH_PULL, PIN_NO_PULL, 1 );
+    //SpiInit( &SX1276.Spi, RADIO_MOSI, RADIO_MISO, RADIO_SCLK, NC );
+    //SX1276IoInit( );
+    //GpioInit( &SX1276.Xtal, RADIO_XTAL_EN, PIN_OUTPUT, PIN_PUSH_PULL, PIN_NO_PULL, 1 );
 		
     if( McuInitialized == false )
     {
         McuInitialized = true;
-        if( GetBoardPowerSource( ) == BATTERY_POWER )
+        //if( GetBoardPowerSource( ) == BATTERY_POWER )
         {
             CalibrateSystemWakeupTime( );
         }
@@ -207,17 +337,9 @@ void BoardInitMcu( void )
 
 void BoardDeInitMcu( void )
 {
-    //Gpio_t ioPin;
 
-    AdcDeInit( &Adc );
-
-    SpiDeInit( &SX1276.Spi );
-    SX1276IoDeInit( );
-
-    //GpioInit( &ioPin, OSC_LSE_IN, PIN_INPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
-    //GpioInit( &ioPin, OSC_LSE_OUT, PIN_INPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
 	
-	  GpioWrite( &SX1276.Xtal, 0 );
+	//  GpioWrite( &SX1276.Xtal, 0 );
 }
 
 #endif
