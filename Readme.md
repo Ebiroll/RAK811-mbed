@@ -23,7 +23,7 @@ which arm-none-eabi-gcc
 
 
 ## Configure for your node
-edit mbedapp.json to configure lora.device-eui, lora.application-eui, lora.application-key
+    edit mbedapp.json to configure lora.device-eui, lora.application-eui, lora.application-key
 
 ## compile
 
@@ -35,17 +35,26 @@ edit mbedapp.json to configure lora.device-eui, lora.application-eui, lora.appli
 
 
 ## To compile with debug info
-mbed compile --profile mbed-os/tools/profiles/debug.json
 
-mbed compile --profile mbed-os/tools/profiles/debug.json  -m MTB_RAK811 -t GCC_ARM
-However it might not fit fo flash,
-To run in qemu,try increasing this
-  FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 256k
-  in 
-mbed-os/targets/TARGET_STM/TARGET_STM32L1/TARGET_MTB_RAK811/device/TOOLCHAIN_GCC_ARM/STM32L151XB-A.ld
+    mbed compile --profile profiles/debug.json
+
+    mbed compile --profile mbed-os/tools/profiles/debug.json
+
+    mbed compile --profile mbed-os/tools/profiles/debug.json  -m MTB_RAK811 -t GCC_ARM
+
+
+    However it might not fit fo flash,
+    To run in qemu,try increasing this
+    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 256k
+    in 
+    mbed-os/targets/TARGET_STM/TARGET_STM32L1/TARGET_MTB_RAK811/device/TOOLCHAIN_GCC_ARM/STM32L151XB-A.ld
 
 
 # Flashing
+
+    ./stm32flash  -w  ./BUILD/MTB_RAK811/GCC_ARM/RAK811-mbed.bin -v -g  0x0  /dev/ttyUSB0
+
+I notice uart transmission stops when the gps connects....
 
 I use backmagic, https://github.com/Ebiroll/esp32_blackmagic
 

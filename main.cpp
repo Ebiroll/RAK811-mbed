@@ -34,11 +34,16 @@
 
 using namespace events;
 
+#define LORAWAN_APP_DATA_SIZE 40
+
 // Max payload size can be LORAMAC_PHY_MAXPAYLOAD.
 // This example only communicates with much shorter messages (<30 bytes).
 // If longer messages are used, these buffers must be changed accordingly.
-uint8_t tx_buffer[40];
-uint8_t rx_buffer[40];
+uint8_t tx_buffer[LORAWAN_APP_DATA_SIZE];
+uint8_t rx_buffer[LORAWAN_APP_DATA_SIZE];
+
+int BuffPtr=0;
+
 
 /*
  * Sets up an application dependent transmission timer in ms. Used only when Duty Cycling is off for testing
@@ -99,6 +104,21 @@ static LoRaWANInterface lorawan(radio);
 static lorawan_app_callbacks_t callbacks;
 
 
+#ifdef HAS_DISPLAY
+void display_line(int line ,const char *data, int param) {
+    display.setTextCursor(line,0);                  // On va écrire en x=0, y=0
+    display.printf("Starting !");   
+    display.display();   
+
+
+}
+#else 
+void display_line(int line ,const char *data, int param) {
+  (void)line;
+
+}
+#endif
+
 /**
  * Entry point for application
  */
@@ -107,13 +127,26 @@ int main (void)
     // setup tracing
     setup_trace();
 
+    display_line(0,"Starting !",0);
+    printf("Starting\n");
+
+    Gps.verbose= true ;
+
     BoardInit();
 
-    display.setTextCursor(0,0);                  // On va écrire en x=0, y=0
-    display.printf("Starting !");   
-    display.display();   
+    Gps.service();
+
+    Gps.verbose= 1 ;
+
+ 
+    wait(3.0);
+    printf("Inverting\n");
 
 
+    // Test inverted
+    Gps.enable( 1 );
+
+    Gps.service();
 
     mbed_printf(" LIS3DH dev id is %d \n", acc.read_id());   
     if (acc.read_id() == I_AM_LIS3DH){
@@ -176,6 +209,10 @@ int main (void)
 
     mbed_printf("\r\n Adaptive data  rate (ADR) - Enabled \r\n");
 
+
+    Gps.service( );
+
+
     retcode = lorawan.connect();
 
     if (retcode == LORAWAN_STATUS_OK ||
@@ -193,6 +230,7 @@ int main (void)
     return 0;
 }
 
+static int send_counter=0;
 
 /**
  * Sends a message to the Network Server
@@ -202,32 +240,58 @@ static void send_message()
     uint16_t packet_len;
     int16_t retcode;
 
-    display.setTextCursor(0,0);                  // On va écrire en x=0, y=0
-    display.printf("           ");
-    display.display();   
+
+    display_line(0, "prepare         %d ",send_counter++);
 
 
     // Read gps value
+    Gps.service( );
 
 
-    tx_buffer[0]=0;
-    tx_buffer[1]=1;
-    tx_buffer[2]=2;
-    tx_buffer[3]=3;
+    if (Gps.have_fix) 
+    {
+        BuffPtr = 0;
 
-    packet_len=4;
+        uint16_t altitudeGps = atoi( Gps.NmeaGpsData.NmeaAltitude );
 
-    retcode = lorawan.send(MBED_CONF_LORA_APP_PORT, tx_buffer, packet_len,
-                           MSG_CONFIRMED_FLAG);
+        if( ( BuffPtr + 8 ) <= LORAWAN_APP_DATA_SIZE )
+        {
+            tx_buffer[BuffPtr++] = ( Gps.LatitudeBinary >> 16 ) & 0xFF;
+            tx_buffer[BuffPtr++] = ( Gps.LatitudeBinary >> 8 ) & 0xFF;
+            tx_buffer[BuffPtr++] = Gps.LatitudeBinary & 0xFF;
+            tx_buffer[BuffPtr++] = ( Gps.LongitudeBinary >> 16 ) & 0xFF;
+            tx_buffer[BuffPtr++] = ( Gps.LongitudeBinary >> 8 ) & 0xFF;
+            tx_buffer[BuffPtr++] = Gps.LongitudeBinary & 0xFF;           
+            tx_buffer[BuffPtr++] = ( altitudeGps >> 8 ) & 0xFF;
+            tx_buffer[BuffPtr++] = altitudeGps & 0xFF;
+        }
 
-    if (retcode < 0) {
-        retcode == LORAWAN_STATUS_WOULD_BLOCK ? mbed_printf("send - WOULD BLOCK\r\n")
-                : mbed_printf("\r\n send() - Error code %d \r\n", retcode);
-        return;
+
+
+        packet_len=BuffPtr;
+
+        retcode = lorawan.send(MBED_CONF_LORA_APP_PORT, tx_buffer, packet_len,
+                            MSG_CONFIRMED_FLAG);
+
+        if (retcode < 0) {
+            retcode == LORAWAN_STATUS_WOULD_BLOCK ? mbed_printf("send - WOULD BLOCK\r\n")
+                    : mbed_printf("\r\n send() - Error code %d \r\n", retcode);
+
+                display_line(1, " send() - Err %d",retcode);
+            return;
+        }
+        
+        display_line(1, "%d bytes scheduled   ",retcode);
+
+
+        mbed_printf("\r\n %d bytes scheduled for transmission \r\n", retcode);
+        memset(tx_buffer, 0, sizeof(tx_buffer));
     }
-
-    mbed_printf("\r\n %d bytes scheduled for transmission \r\n", retcode);
-    memset(tx_buffer, 0, sizeof(tx_buffer));
+    else {
+        display_line(1, "No GPS Fix        ",0);
+        printf("No GPS Fix yet\n");
+        
+    }
 }
 
 /**

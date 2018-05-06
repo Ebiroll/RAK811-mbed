@@ -27,8 +27,27 @@ Maintainer: Miguel Luis and Gregory Cristian
 DigitalOut RedLed( LED_1 );     // Active Low
 DigitalOut GreenLed( LED_2 );   // Active Low
 
+/*
 
-GPS Gps( GPS_UART_TX, GPS_UART_RX, GPS_POWER_ON_PIN ); // Gps(tx, rx, en);
++const PinMap PinMap_UART_TX[] = {
++    {PA_2,  UART_2, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF7_USART2)},
++    {PA_9,  UART_1, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF7_USART1)},
++    {PB_10, UART_3, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF7_USART3)},
++    {NC,    NC,     0}
++};
++
++const PinMap PinMap_UART_RX[] = {
++    {PA_10, UART_1, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF7_USART1)},
++    {PB_11, UART_3, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF7_USART3)},
++    {NC,    NC,     0}
++};
+
+#define UART_TX                                     PA_9
+#define UART_RX                                     PA_10
+
+*/
+
+GPS Gps( GPS_UART_TX , GPS_UART_RX,  GPS_POWER_ON_PIN ); // Gps(tx, rx, en);
 
 DigitalIn I2cInterrupt( LIS3DH_INT1_PIN );
 I2C I2c(I2C_SDA, I2C_SCL);
