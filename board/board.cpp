@@ -28,6 +28,7 @@ DigitalOut RedLed( LED_1 );     // Active Low
 DigitalOut GreenLed( LED_2 );   // Active Low
 
 /*
+PA_0    PPS pin
 
 +const PinMap PinMap_UART_TX[] = {
 +    {PA_2,  UART_2, STM_PIN_DATA(STM_MODE_AF_PP, GPIO_PULLUP, GPIO_AF7_USART2)},
@@ -44,6 +45,12 @@ DigitalOut GreenLed( LED_2 );   // Active Low
 
 #define UART_TX                                     PA_9
 #define UART_RX                                     PA_10
+
+#define GPS_UART        		            		UART_3 
+#define GPS_POWER_ON_PIN		            		PA_15
+#define GPS_UART_TX                                 PB_10
+#define GPS_UART_RX                                 PB_11
+#define GPS_PPS_PIN                                 PA_0
 
 */
 
@@ -117,12 +124,12 @@ void BoardInit( void )
 
 
     display.splash();
-    wait(2.0);
+    display.display();
+    wait(0.5);
     display.clearDisplay();
 
-
-    Gps.init( );
     Gps.enable( 1 );
+    Gps.init( );
 
 }
 

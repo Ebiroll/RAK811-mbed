@@ -103,13 +103,13 @@ static LoRaWANInterface lorawan(radio);
  */
 static lorawan_app_callbacks_t callbacks;
 
+//#define HAS_DISPLAY 1
 
 #ifdef HAS_DISPLAY
 void display_line(int line ,const char *data, int param) {
-    display.setTextCursor(line,0);                  // On va écrire en x=0, y=0
-    display.printf("Starting !");   
+    display.setTextCursor(line,0);  
+    display.printf(data,param);   
     display.display();   
-
 
 }
 #else 
@@ -118,6 +118,13 @@ void display_line(int line ,const char *data, int param) {
 
 }
 #endif
+
+
+const int buffer_size = 255;
+// might need to increase buffer size for high baud rates
+char gps_buffer[buffer_size+1];
+
+volatile int rx_in=0;
 
 /**
  * Entry point for application
@@ -135,17 +142,31 @@ int main (void)
     BoardInit();
 
     Gps.service();
+    Gps.verbose= true ;
 
-    Gps.verbose= 1 ;
+#if 0
+    // To test that data is received from GPS this you must make m_uart public
+    Gps.m_uart.baud(9600);
+    NVIC_DisableIRQ(USART3_IRQn);
 
- 
-    wait(3.0);
-    printf("Inverting\n");
+    printf("GPS Echo\n");    
+    for (int j=0;j<20000;j++) {
+        while ( Gps.m_uart.readable()) {
+            gps_buffer[rx_in] = Gps.m_uart.getc();
+            printf("%c",gps_buffer[rx_in]);
+            //if (rx_buffer[rx_in]==13 || rx_buffer[rx_in]==10)
+        }
+    }
 
+    NVIC_EnableIRQ(USART3_IRQn);
+#endif
 
-    // Test inverted
-    Gps.enable( 1 );
-
+    // Test powecycle gps
+    //Gps.enable(0);
+    //wait(0.5);
+    Gps.enable(1);
+    // make sure IRQ is enabled
+    NVIC_EnableIRQ(USART3_IRQn);
     Gps.service();
 
     mbed_printf(" LIS3DH dev id is %d \n", acc.read_id());   
@@ -243,10 +264,24 @@ static void send_message()
 
     display_line(0, "prepare         %d ",send_counter++);
 
-
-    // Read gps value
     Gps.service( );
 
+    // Read gps value
+#if 0
+    // Cceck data
+    NVIC_DisableIRQ(USART3_IRQn);
+
+    printf("GPS Echo\n");    
+    for (int j=0;j<30000;j++) {
+        while ( Gps.m_uart.readable()) {
+            gps_buffer[rx_in] = Gps.m_uart.getc();
+            printf("%c",gps_buffer[rx_in]);
+            //if (rx_buffer[rx_in]==13 || rx_buffer[rx_in]==10)
+        }
+    }
+
+    NVIC_EnableIRQ(USART3_IRQn);
+#endif
 
     if (Gps.have_fix) 
     {
@@ -325,9 +360,13 @@ static void receive_message()
  */
 static void lora_event_handler(lorawan_event_t event)
 {
+    Gps.service( );
+
     switch (event) {
         case CONNECTED:
             mbed_printf("\r\n Connection - Successful \r\n");
+            display_line(1,"Conn - success     " ,0);
+            
             if (MBED_CONF_LORA_DUTY_CYCLE_ON) {
                 send_message();
             } else {
@@ -338,12 +377,12 @@ static void lora_event_handler(lorawan_event_t event)
         case DISCONNECTED:
             ev_queue.break_dispatch();
             mbed_printf("\r\n Disconnected Successfully \r\n");
+            display_line(1,"Disconnected -      " ,0);
+
             break;
         case TX_DONE:
             mbed_printf("\r\n Message Sent to Network Server \r\n");
-            display.setTextCursor(0,0);                  // On va écrire en x=0, y=0
-            display.printf("Message Sent !");   
-            display.display();   
+            display_line(2,"Message Sent!     " ,0);
 
             if (MBED_CONF_LORA_DUTY_CYCLE_ON) {
                 send_message();
@@ -354,6 +393,8 @@ static void lora_event_handler(lorawan_event_t event)
         case TX_CRYPTO_ERROR:
         case TX_SCHEDULING_ERROR:
             mbed_printf("\r\n Transmission Error - EventCode = %d \r\n", event);
+            display_line(1,"Trans - Error %d    " ,event);
+
             // try again
             if (MBED_CONF_LORA_DUTY_CYCLE_ON) {
                 send_message();
@@ -361,14 +402,19 @@ static void lora_event_handler(lorawan_event_t event)
             break;
         case RX_DONE:
             mbed_printf("\r\n Received message from Network Server \r\n");
+            display_line(2,"Reci - Mess       " ,0);
+
             receive_message();
             break;
         case RX_TIMEOUT:
         case RX_ERROR:
-            mbed_printf("\r\n Error in reception - Code = %d \r\n", event);
+            mbed_printf("\r\n Error in reception - Code = %d \r\n", event);            
+            display_line(2,"Error in recept     " ,event);
+
             break;
         case JOIN_FAILURE:
             mbed_printf("\r\n OTAA Failed - Check Keys \r\n");
+            display_line(1,"OTAA Failed - Check Keys    " ,0);
             break;
         default:
             MBED_ASSERT("Unknown Event");
