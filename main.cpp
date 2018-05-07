@@ -134,17 +134,17 @@ int main (void)
     // setup tracing
     setup_trace();
 
-    display_line(0,"Starting !",0);
     printf("Starting\n");
 
     Gps.verbose= true ;
 
     BoardInit();
 
+    display_line(0,"Starting !",0);
     Gps.service();
     Gps.verbose= true ;
 
-#if 0
+#if 1
     // To test that data is received from GPS this you must make m_uart public
     Gps.m_uart.baud(9600);
     NVIC_DisableIRQ(USART3_IRQn);
@@ -203,9 +203,12 @@ int main (void)
     // Initialize LoRaWAN stack
     if (lorawan.initialize(&ev_queue) != LORAWAN_STATUS_OK) {
         mbed_printf("\r\n LoRa initialization failed! \r\n");
+        display_line(0,"LoRa init failed !   ",0);
+
         return -1;
     }
 
+    display_line(1,"Mbed LoRaWANStack !  ",0);
     mbed_printf("\r\n New Mbed LoRaWANStack initialized \r\n");
 
     // prepare application callbacks
@@ -218,6 +221,8 @@ int main (void)
         mbed_printf("\r\n set_confirmed_msg_retries failed! \r\n\r\n");
         return -1;
     }
+
+    display_line(1,"Message retries %d ",CONFIRMED_MSG_RETRY_COUNTER);
 
     mbed_printf("\r\n CONFIRMED message retries : %d \r\n",
            CONFIRMED_MSG_RETRY_COUNTER);
@@ -267,7 +272,7 @@ static void send_message()
     Gps.service( );
 
     // Read gps value
-#if 0
+#if    1
     // Cceck data
     NVIC_DisableIRQ(USART3_IRQn);
 
@@ -323,7 +328,7 @@ static void send_message()
         memset(tx_buffer, 0, sizeof(tx_buffer));
     }
     else {
-        display_line(1, "No GPS Fix        ",0);
+        display_line(3, "No GPS Fix        ",0);
         printf("No GPS Fix yet\n");
         
     }
