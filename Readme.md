@@ -78,6 +78,8 @@ http://www.st.com/en/microcontrollers/stm32l1-series.html?querycriteria=productI
 
 Reference manual
 
+http://www.st.com/resource/en/datasheet/stm32l151c6.pdf
+
 http://www.st.com/content/ccc/resource/technical/document/reference_manual/cc/f9/93/b2/f0/82/42/57/CD00240193.pdf/files/CD00240193.pdf/jcr:content/translations/en.CD00240193.pdf
 
 ## lORA WAN 1.0.2
