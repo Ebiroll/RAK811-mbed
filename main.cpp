@@ -293,7 +293,7 @@ static void send_message()
         BuffPtr = 0;
 
         uint16_t altitudeGps = atoi( Gps.NmeaGpsData.NmeaAltitude );
-
+/*
         if( ( BuffPtr + 8 ) <= LORAWAN_APP_DATA_SIZE )
         {
             tx_buffer[BuffPtr++] = ( Gps.LatitudeBinary >> 16 ) & 0xFF;
@@ -305,12 +305,44 @@ static void send_message()
             tx_buffer[BuffPtr++] = ( altitudeGps >> 8 ) & 0xFF;
             tx_buffer[BuffPtr++] = altitudeGps & 0xFF;
         }
+*/
+	    //ret = GpsGetLatestGpsPositionDouble(&latitude, &longitude);
+        double hdopGps;
+        double latitude=Gps.Latitude;
+        double longitude=Gps.Longitude;
+		altitudeGps =  atoi( Gps.NmeaGpsData.NmeaAltitude ); // in m
+		hdopGps =  atof( Gps.NmeaGpsData.NmeaHorizontalDilution);
+		//printf("[Debug]: latitude: %f, longitude: %f , altitudeGps: %d \n", latitude, longitude, altitudeGps);
+		int32_t lat = ((latitude + 90) / 180.0) * 16777215;
+		int32_t lon = ((longitude + 180) / 360.0) * 16777215;
+		int16_t alt = altitudeGps;
+		int8_t hdev =  hdopGps; 
+		
 
+        printf("Lat: %d Lon: %d, Alt: %d\r\n", (int)lat, (int)lon, alt);
+
+        tx_buffer[BuffPtr++] = lat >> 16;
+        tx_buffer[BuffPtr++] = lat >> 8;
+        tx_buffer[BuffPtr++] = lat;
+
+        tx_buffer[BuffPtr++] = lon >> 16;
+        tx_buffer[BuffPtr++] = lon >> 8;
+        tx_buffer[BuffPtr++] = lon;
+
+        tx_buffer[BuffPtr++] = alt >> 8;
+        tx_buffer[BuffPtr++] = alt;
+
+        tx_buffer[BuffPtr++] = hdev;
+        tx_buffer[BuffPtr++] = atoi( Gps.NmeaGpsData.NmeaFixQuality);
+        tx_buffer[BuffPtr++] = atoi( Gps.NmeaGpsData.NmeaSatelliteTracked);
+        //AppDataSize = 10;
+            
+            
 
 
         packet_len=BuffPtr;
-
-        retcode = lorawan.send(MBED_CONF_LORA_APP_PORT, tx_buffer, packet_len,
+        // MBED_CONF_LORA_APP_PORT
+        retcode = lorawan.send(2, tx_buffer, packet_len,
                             MSG_CONFIRMED_FLAG);
 
         if (retcode < 0) {
