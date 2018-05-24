@@ -1,0 +1,33 @@
+{
+  "build": {
+    "cpu": "cortex-m3",
+    "extra_flags": "-DSTM32L151xBA",
+    "f_cpu": "32000000L",
+    "mcu": "stm32l151xba",
+    "variant": "stm32l151xba",
+    "ldscript": "STM32L151XB-A.ld"
+  },
+  "debug": {
+    "openocd_target": "stm32l1",
+    "svd_path": "STM32L15xC.svd"
+  },
+  "frameworks": [
+    "mbed",
+    "stm32cube",
+    "cmsis",
+    "libopencm3"
+  ],
+  "name": "RAK811_MTB",
+  "upload": {
+    "maximum_ram_size": 32768,
+    "maximum_size": 262144,
+    "protocol": "stlink",
+    "protocols": [
+      "jlink",
+      "stlink",
+      "blackmagic"
+    ]
+  },
+  "url": "http://www.rakwireless.com/en/download/RAK811%20Breakout%20Board/HardWare%20Design",
+  "vendor": "RAK"
+}
